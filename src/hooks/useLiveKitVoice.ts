@@ -10,6 +10,7 @@ interface LiveKitVoiceState {
   isInterrupted: boolean;
   transcript: string;
   error: string | null;
+  language: string; // Track current language for VAD optimization
 }
 
 export const useLiveKitVoice = () => {
@@ -21,6 +22,7 @@ export const useLiveKitVoice = () => {
     isInterrupted: false,
     transcript: '',
     error: null,
+    language: 'en', // Default to English
   });
 
   const roomRef = useRef<Room | null>(null);
@@ -84,12 +86,29 @@ export const useLiveKitVoice = () => {
 
       // Set up LiveKit's built-in ASR
       room.on(RoomEvent.DataReceived, (payload, participant) => {
-        if (payload.topic === 'asr' && participant.identity === 'agent') {
-          console.log('🎤 LiveKit ASR result received:', payload.data);
-          const transcript = payload.data.transcript;
-          if (transcript) {
-            setState(prev => ({ ...prev, transcript }));
+        try {
+          // Parse the payload as JSON if it's a string
+          let data;
+          if (typeof payload === 'string') {
+            data = JSON.parse(payload);
+          } else if (payload instanceof Uint8Array) {
+            // Convert Uint8Array to string and parse
+            const decoder = new TextDecoder();
+            const jsonString = decoder.decode(payload);
+            data = JSON.parse(jsonString);
+          } else {
+            data = payload;
           }
+          
+          if (data.topic === 'asr' && participant?.identity === 'agent') {
+            console.log('🎤 LiveKit ASR result received:', data);
+            const transcript = data.data?.transcript;
+            if (transcript) {
+              setState(prev => ({ ...prev, transcript }));
+            }
+          }
+        } catch (error) {
+          console.log('🎤 LiveKit data parsing error:', error);
         }
       });
       
@@ -202,10 +221,16 @@ export const useLiveKitVoice = () => {
         };
 
         recognition.onerror = (event: any) => {
+          // Don't treat "aborted" as an error - it's normal when stopping recognition
+          if (event.error === 'aborted') {
+            console.log('🎤 Speech recognition aborted (normal when stopping)');
+            return;
+          }
+          
           console.error('🎤 Speech recognition error:', event.error);
           
-          // Auto-restart on recoverable errors
-          if (['no-speech', 'aborted', 'network'].includes(event.error) && 
+          // Auto-restart on recoverable errors (but not aborted)
+          if (['no-speech', 'network'].includes(event.error) && 
               state.isContinuousMode && shouldAutoRestartRef.current) {
             console.log('🎤 Recoverable error - restarting recognition...');
             setTimeout(() => {
@@ -254,6 +279,10 @@ export const useLiveKitVoice = () => {
             } 
           });
           
+          // VAD state for debouncing
+          let vadInterruptionCount = 0;
+          let lastInterruptionTime = 0;
+          
           micStreamRef.current = stream;
           audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
           
@@ -278,23 +307,50 @@ export const useLiveKitVoice = () => {
             }
             const rms = Math.sqrt(sum / dataArray.length);
             
-            // If voice detected while AI is speaking, interrupt!
-            if (rms > 0.08 && state.isSpeaking) {
-              console.log('⚡ VAD: User voice detected - interrupting AI!');
+            // BALANCED INSTANT INTERRUPTION - Sensitive but not too sensitive!
+            const currentLanguage = state.language || 'en';
+            const vadThreshold = currentLanguage === 'hi' ? 0.025 : 0.03; // More reasonable sensitivity
+            
+            // Debug VAD - log RMS values when AI is speaking
+            if (state.isSpeaking && rms > 0.01) {
+              console.log('🎧 VAD Debug - RMS:', rms.toFixed(4), 'Threshold:', vadThreshold, 'Language:', currentLanguage);
+            }
+            
+            if (rms > vadThreshold && state.isSpeaking) {
+              const now = Date.now();
+              
+              // IMMEDIATE INTERRUPTION - Stop AI instantly when voice detected!
+              console.log('⚡ VAD: User voice detected (RMS:', rms.toFixed(3), ') - INSTANTLY interrupting AI! Language:', currentLanguage);
+              
+              // Force stop ALL speech immediately (no debounce for instant response)
               if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
               }
+              
+              // Stop ElevenLabs audio if playing
+              if (currentUtteranceRef.current && currentUtteranceRef.current instanceof HTMLAudioElement) {
+                const audio = currentUtteranceRef.current;
+                audio.pause();
+                audio.currentTime = 0;
+                audio.onended = null;
+                audio.onerror = null;
+                audio.src = '';
+                currentUtteranceRef.current = null;
+              }
+              
               setState(prev => ({ 
                 ...prev, 
                 isSpeaking: false, 
                 isInterrupted: true 
               }));
+              
+              lastInterruptionTime = now;
+              vadInterruptionCount++;
+              console.log('⚡ AI speech completely stopped - waiting for user to finish speaking (interruption #', vadInterruptionCount, ') Language:', currentLanguage);
             }
             
-            // Continue monitoring if in continuous mode
-            if (shouldAutoRestartRef.current) {
-              vadTimerRef.current = window.requestAnimationFrame(checkVoiceActivity) as unknown as number;
-            }
+            // Continue monitoring ALWAYS - not just in continuous mode
+            vadTimerRef.current = window.requestAnimationFrame(checkVoiceActivity) as unknown as number;
           };
           
           // Start voice activity monitoring
@@ -562,13 +618,17 @@ export const useLiveKitVoice = () => {
         utterance.pitch = 1;
         utterance.volume = 1.0;
         
-        // Set voice explicitly for reliability
+        // Set voice explicitly for reliability - prefer consistent voice
         const voices = window.speechSynthesis.getVoices();
         if (voices.length > 0) {
-          // Prefer default voice, fallback to first available
-          const voice = voices.find(v => v.default) || voices[0];
+          // Prefer a consistent voice - try to find a good English voice
+          let voice = voices.find(v => v.name.includes('Microsoft') && v.lang.includes('en')) ||
+                     voices.find(v => v.name.includes('Google') && v.lang.includes('en')) ||
+                     voices.find(v => v.default) ||
+                     voices[0];
+          
           utterance.voice = voice;
-          console.log('🔊 Using voice:', voice.name, voice.lang);
+          console.log('🔊 Using fallback voice:', voice.name, voice.lang);
         }
         
         // Store current utterance for cleanup
@@ -628,7 +688,6 @@ export const useLiveKitVoice = () => {
           setState(prev => ({ ...prev, isSpeaking: false }));
         }, 3000);
       }
-      
     } catch (error) {
       console.error('❌ Failed to speak:', error);
       setState(prev => ({ ...prev, isSpeaking: false }));
@@ -724,6 +783,12 @@ export const useLiveKitVoice = () => {
     console.log('⚡ All speech force stopped');
   }, []);
 
+  // Update language for VAD optimization
+  const updateLanguage = useCallback((language: string) => {
+    console.log('🌐 Updating VAD language to:', language);
+    setState(prev => ({ ...prev, language }));
+  }, []);
+
   // Test audio system
   const testAudio = useCallback(() => {
     console.log('🔊 Testing audio system...');
@@ -792,6 +857,7 @@ export const useLiveKitVoice = () => {
     stopSpeaking,
     handleUserInterruption,
     forceStopSpeech,
+    updateLanguage,
     testAudio,
     disconnect,
   };

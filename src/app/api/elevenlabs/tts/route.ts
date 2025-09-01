@@ -3,14 +3,14 @@ import { NextRequest, NextResponse } from 'next/server';
 // ElevenLabs voice IDs for different languages
 const VOICE_IDS = {
   english: {
-    default: '21m00Tcm4TlvDq8ikWAM', // Rachel - English
-    male: 'pNInz6obpgDQGcFmaJgB', // Adam - English
-    female: '21m00Tcm4TlvDq8ikWAM', // Rachel - English
+    default: 'TRnaQb7q41oL7sV0w6Bu', // User's preferred voice
+    male: 'TRnaQb7q41oL7sV0w6Bu', // User's preferred voice
+    female: 'TRnaQb7q41oL7sV0w6Bu', // User's preferred voice
   },
   hindi: {
-    default: '21m00Tcm4TlvDq8ikWAM', // We'll use Rachel for Hindi too (she handles Hindi well)
-    male: 'pNInz6obpgDQGcFmaJgB', // Adam for Hindi
-    female: '21m00Tcm4TlvDq8ikWAM', // Rachel for Hindi
+    default: 'TRnaQb7q41oL7sV0w6Bu', // User's preferred voice (test if it handles Hindi)
+    male: 'TRnaQb7q41oL7sV0w6Bu', // User's preferred voice
+    female: 'TRnaQb7q41oL7sV0w6Bu', // User's preferred voice
   }
 };
 
@@ -31,7 +31,15 @@ export async function POST(request: NextRequest) {
     const voiceId = VOICE_IDS[language as keyof typeof VOICE_IDS]?.[voiceType as keyof typeof VOICE_IDS.english] || 
                    VOICE_IDS.english.default;
 
-    console.log(`🎤 ElevenLabs TTS: Converting "${text.substring(0, 50)}..." to ${language} using voice ${voiceId}`);
+    // Optimize text length to save credits - truncate if too long
+    let optimizedText = text;
+    const maxLength = 500; // Limit to 500 characters to save credits
+    if (text.length > maxLength) {
+      optimizedText = text.substring(0, maxLength) + '...';
+      console.log(`🎤 ElevenLabs TTS: Text truncated from ${text.length} to ${optimizedText.length} characters to save credits`);
+    }
+
+    console.log(`🎤 ElevenLabs TTS: Converting "${optimizedText.substring(0, 50)}..." to ${language} using voice ${voiceId}`);
 
     // ElevenLabs API call
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
@@ -42,7 +50,7 @@ export async function POST(request: NextRequest) {
         'xi-api-key': apiKey,
       },
       body: JSON.stringify({
-        text: text,
+        text: optimizedText,
         model_id: 'eleven_multilingual_v2', // Multilingual model for Hindi/English
         voice_settings: {
           stability: 0.5,
@@ -56,9 +64,16 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ ElevenLabs API error:', response.status, errorText);
+      
+      // Check if it's a quota exceeded error
+      if (response.status === 401 && errorText.includes('quota_exceeded')) {
+        console.warn('⚠️ ElevenLabs quota exceeded - consider upgrading plan or using fallback TTS');
+      }
+      
       return NextResponse.json({ 
         error: `ElevenLabs API error: ${response.status}`,
-        details: errorText 
+        details: errorText,
+        quotaExceeded: response.status === 401 && errorText.includes('quota_exceeded')
       }, { status: response.status });
     }
 

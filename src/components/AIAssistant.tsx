@@ -54,6 +54,7 @@ export default function AIAssistant() {
               stopSpeaking,
               handleUserInterruption,
               forceStopSpeech,
+              updateLanguage,
               testAudio,
               disconnect,
             } = useLiveKitVoice();
@@ -181,7 +182,7 @@ export default function AIAssistant() {
       } catch (error) {
         console.error('Failed to connect to LiveKit:', error);
         // Fallback to old method
-        if (isVoiceEnabled) {
+        if (isLiveKitConnected) {
           handleMicToggleOld();
         }
       }
@@ -193,7 +194,7 @@ export default function AIAssistant() {
 
   // Keep old method as fallback
   const handleMicToggleOld = () => {
-    if (isListening) {
+    if (isLiveKitListening) {
       stopListening();
     } else {
       startListening();
@@ -203,6 +204,9 @@ export default function AIAssistant() {
   const handleLanguageToggle = () => {
     const newLanguage = language === 'en' ? 'hi' : 'en';
     setLanguage(newLanguage);
+    
+    // Update VAD language for optimized interruption
+    updateLanguage(newLanguage);
     
     // Restart speech recognition with new language if currently listening
     if (isContinuousMode) {
@@ -317,6 +321,15 @@ export default function AIAssistant() {
               transition={{ duration: 1, repeat: Infinity }}
             />
           )}
+          
+          {/* VAD Active indicator */}
+          {isContinuousMode && !isLiveKitSpeaking && (
+            <motion.div
+              className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-400 rounded-full"
+              animate={{ scale: [1, 1.3, 1] }}
+              transition={{ duration: 0.8, repeat: Infinity }}
+            />
+          )}
         </motion.button>
 
         {/* Language Toggle */}
@@ -347,6 +360,27 @@ export default function AIAssistant() {
                     ⚡ Interrupted - Listening for you
                   </p>
                 )}
+                {isContinuousMode && (
+                  <p className="text-green-600 font-medium">
+                    🎧 VAD Active - Will interrupt AI instantly
+                    {language === 'hi' && (
+                      <span className="text-blue-600 ml-2">
+                        (Hindi Optimized - Extra Sensitive)
+                      </span>
+                    )}
+                  </p>
+                )}
+                <p className="text-purple-600 font-medium">
+                  🎧 VAD Status: {isContinuousMode ? 'Monitoring' : 'Inactive'} 
+                  {isLiveKitSpeaking && ' - Ready to interrupt!'}
+                  <br />
+                  <span className="text-sm text-gray-600">
+                    Mic Sensitivity: {language === 'hi' ? 'High (Hindi)' : 'Normal (English)'}
+                  </span>
+                </p>
+                <p className="text-blue-600 font-medium">
+                  🎤 TTS: ElevenLabs (Natural) + Browser Fallback
+                </p>
                 {!isLiveKitConnected && (
                   <p className="text-orange-600 font-medium mt-2">
                     💡 Click the mic button to connect and enable voice mode
@@ -359,6 +393,41 @@ export default function AIAssistant() {
                   className="mt-2 px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition-colors"
                 >
                   🔊 Test Audio
+                </button>
+                
+                {/* Voice Test Button */}
+                <button
+                  onClick={() => {
+                    const testText = language === 'hi' 
+                      ? 'नमस्ते! यह आपकी पसंदीदा आवाज़ का टेस्ट है।' 
+                      : 'Hello! This is a test of your preferred voice.';
+                    speak(testText, language);
+                  }}
+                  className="mt-2 ml-2 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+                >
+                  🎤 Test Voice
+                </button>
+                
+                {/* VAD Test Button */}
+                <button
+                  onClick={() => {
+                    console.log('🧪 Testing VAD system...');
+                    speak('This is a test message to check if VAD interruption works. Try speaking while I am talking to interrupt me.', 'en');
+                  }}
+                  className="mt-2 ml-2 px-3 py-1 bg-purple-500 text-white text-xs rounded hover:bg-purple-600 transition-colors"
+                >
+                  🧪 Test VAD
+                </button>
+                
+                {/* Manual Interrupt Button */}
+                <button
+                  onClick={() => {
+                    console.log('🛑 Manual interruption triggered');
+                    forceStopSpeech();
+                  }}
+                  className="mt-2 ml-2 px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors"
+                >
+                  🛑 Force Stop
                 </button>
               </div>
             </div>
@@ -447,7 +516,7 @@ export default function AIAssistant() {
             disabled={isLoading}
           />
           <motion.button
-            onClick={handleSendMessage}
+            onClick={() => handleSendMessage()}
             disabled={!inputText.trim() || isLoading}
             className="p-3 rounded-full bg-gradient-to-r from-[#66BB6A]/30 to-[#81C784]/30 border border-[#66BB6A]/50 text-[#2E7D32] hover:shadow-pastel disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
             whileHover={{ scale: inputText.trim() && !isLoading ? 1.05 : 1 }}
