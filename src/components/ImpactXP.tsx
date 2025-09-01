@@ -31,7 +31,44 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  Info
+  Info,
+  DollarSign,
+  Crown,
+  TrendingDown,
+  PieChart,
+  MapPin,
+  CalendarDays,
+  Users2,
+  Building2,
+  Coins,
+  Wallet,
+  CreditCard,
+  Lock,
+  Unlock,
+  Sparkle,
+  Target as TargetIcon,
+  BarChart,
+  LineChart,
+  Activity as ActivityIcon,
+  Award as AwardIcon,
+  Gift as GiftIcon,
+  Star as StarIcon,
+  Zap as ZapIcon,
+  Crown as CrownIcon,
+  DollarSign as DollarSignIcon,
+  TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
+  PieChart as PieChartIcon,
+  MapPin as MapPinIcon,
+  CalendarDays as CalendarDaysIcon,
+  Users2 as Users2Icon,
+  Building2 as Building2Icon,
+  Coins as CoinsIcon,
+  Wallet as WalletIcon,
+  CreditCard as CreditCardIcon,
+  Lock as LockIcon,
+  Unlock as UnlockIcon,
+  Sparkle as SparkleIcon
 } from 'lucide-react';
 
 interface ImpactActivity {
@@ -51,6 +88,9 @@ interface ImpactActivity {
   location: string;
   category: string;
   verified: boolean;
+  premium?: boolean;
+  revenue?: number;
+  investorInterest?: number;
 }
 
 interface ImpactStats {
@@ -65,14 +105,41 @@ interface ImpactStats {
   streakDays: number;
   badgesEarned: number;
   impactScore: number;
+  // Premium stats
+  premiumTier: 'free' | 'pro' | 'enterprise';
+  monthlyRevenue: number;
+  investorScore: number;
+  socialROI: number;
+  communityReach: number;
+  brandValue: number;
+  sustainabilityIndex: number;
+}
+
+interface PremiumFeature {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  features: string[];
+  popular?: boolean;
+  recommended?: boolean;
+}
+
+interface InvestorMetric {
+  metric: string;
+  value: number;
+  change: number;
+  trend: 'up' | 'down' | 'stable';
+  premium: boolean;
 }
 
 const ImpactXP = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'activities' | 'analytics' | 'goals'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'activities' | 'analytics' | 'goals' | 'premium' | 'investors'>('overview');
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'year' | 'all'>('month');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
 
-  // Mock Impact Stats
+  // Enhanced Impact Stats with Premium Features
   const impactStats: ImpactStats = {
     totalXP: 2847,
     level: 15,
@@ -84,10 +151,63 @@ const ImpactXP = () => {
     totalTreesPlanted: 23,
     streakDays: 12,
     badgesEarned: 6,
-    impactScore: 94
+    impactScore: 94,
+    // Premium stats
+    premiumTier: 'free',
+    monthlyRevenue: 2500,
+    investorScore: 87,
+    socialROI: 340,
+    communityReach: 2500,
+    brandValue: 15000,
+    sustainabilityIndex: 92
   };
 
-  // Mock Impact Activities
+  // Premium Features
+  const premiumFeatures: PremiumFeature[] = [
+    {
+      id: 'pro',
+      name: 'Pro Impact',
+      description: 'Perfect for growing NGOs and social enterprises',
+      price: 29,
+      features: [
+        'Advanced Analytics Dashboard',
+        'Investor Pitch Deck Generator',
+        'Revenue Tracking & Forecasting',
+        'Premium Impact Reports',
+        'Priority Support',
+        'Custom Branding'
+      ],
+      popular: true
+    },
+    {
+      id: 'enterprise',
+      name: 'Enterprise Impact',
+      description: 'For large NGOs and corporate social responsibility',
+      price: 99,
+      features: [
+        'Everything in Pro',
+        'AI-Powered Impact Prediction',
+        'Investor Matching System',
+        'White-label Solutions',
+        'API Access',
+        'Dedicated Account Manager',
+        'Custom Integrations'
+      ],
+      recommended: true
+    }
+  ];
+
+  // Investor Metrics
+  const investorMetrics: InvestorMetric[] = [
+    { metric: 'Social ROI', value: 340, change: 12.5, trend: 'up', premium: true },
+    { metric: 'Community Reach', value: 2500, change: 8.2, trend: 'up', premium: true },
+    { metric: 'Brand Value', value: 15000, change: 15.3, trend: 'up', premium: true },
+    { metric: 'Sustainability Index', value: 92, change: 3.1, trend: 'up', premium: true },
+    { metric: 'Investor Interest Score', value: 87, change: 5.7, trend: 'up', premium: true },
+    { metric: 'Monthly Revenue', value: 2500, change: 18.4, trend: 'up', premium: true }
+  ];
+
+  // Enhanced Impact Activities with Premium Data
   const impactActivities: ImpactActivity[] = [
     {
       id: '1',
@@ -105,7 +225,10 @@ const ImpactXP = () => {
       },
       location: 'Bangalore Public School',
       category: 'Education',
-      verified: true
+      verified: true,
+      premium: true,
+      revenue: 500,
+      investorInterest: 85
     },
     {
       id: '2',
@@ -123,7 +246,10 @@ const ImpactXP = () => {
       },
       location: 'Kerala',
       category: 'Disaster Relief',
-      verified: true
+      verified: true,
+      premium: true,
+      revenue: 1200,
+      investorInterest: 92
     },
     {
       id: '3',
@@ -141,7 +267,10 @@ const ImpactXP = () => {
       },
       location: 'Cubbon Park, Bangalore',
       category: 'Environment',
-      verified: true
+      verified: true,
+      premium: false,
+      revenue: 0,
+      investorInterest: 78
     },
     {
       id: '4',
@@ -159,7 +288,10 @@ const ImpactXP = () => {
       },
       location: 'City Hospital, Bangalore',
       category: 'Healthcare',
-      verified: true
+      verified: true,
+      premium: true,
+      revenue: 800,
+      investorInterest: 88
     },
     {
       id: '5',
@@ -177,7 +309,10 @@ const ImpactXP = () => {
       },
       location: 'Senior Citizens Center',
       category: 'Education',
-      verified: false
+      verified: false,
+      premium: true,
+      revenue: 400,
+      investorInterest: 82
     }
   ];
 
@@ -251,6 +386,12 @@ const ImpactXP = () => {
           <div className="text-right">
             <div className="text-3xl font-bold text-emerald-600">{impactStats.impactScore}</div>
             <div className="text-sm text-gray-500">Impact Score</div>
+            {impactStats.premiumTier !== 'free' && (
+              <div className="flex items-center justify-center mt-2">
+                <Crown className="w-4 h-4 text-yellow-500 mr-1" />
+                <span className="text-xs text-yellow-600 font-medium uppercase">{impactStats.premiumTier}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -293,20 +434,48 @@ const ImpactXP = () => {
             </motion.div>
           ))}
         </div>
+
+        {/* Premium Stats Preview */}
+        {impactStats.premiumTier === 'free' && (
+          <motion.div 
+            className="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-200"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-yellow-800 flex items-center">
+                  <Crown className="w-4 h-4 mr-2" />
+                  Unlock Premium Analytics
+                </h3>
+                <p className="text-sm text-yellow-700">Get detailed revenue tracking, investor metrics, and advanced insights</p>
+              </div>
+              <button 
+                onClick={() => setShowPremiumModal(true)}
+                className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg text-sm font-medium hover:from-yellow-600 hover:to-orange-600 transition-all"
+              >
+                Upgrade
+              </button>
+            </div>
+          </motion.div>
+        )}
       </motion.div>
 
       {/* Tab Navigation */}
-      <div className="mx-6 mt-6 flex space-x-2">
+      <div className="mx-6 mt-6 flex space-x-2 overflow-x-auto">
         {[
           { id: 'overview', name: 'Overview', icon: '📊' },
           { id: 'activities', name: 'Activities', icon: '📝' },
           { id: 'analytics', name: 'Analytics', icon: '📈' },
-          { id: 'goals', name: 'Goals', icon: '🎯' }
+          { id: 'goals', name: 'Goals', icon: '🎯' },
+          { id: 'premium', name: 'Premium', icon: '👑' },
+          { id: 'investors', name: 'Investors', icon: '💰' }
         ].map((tab) => (
           <motion.button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all duration-300 ${
+            className={`flex-shrink-0 py-3 px-4 rounded-xl font-medium transition-all duration-300 ${
               activeTab === tab.id
                 ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-lg'
                 : 'bg-white text-gray-600 border border-emerald-200 hover:bg-emerald-50'
@@ -449,6 +618,12 @@ const ImpactXP = () => {
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(activity.status)}`}>
                           {activity.status}
                         </span>
+                        {activity.premium && (
+                          <div className="flex items-center justify-center mt-1">
+                            <Crown className="w-3 h-3 text-yellow-500 mr-1" />
+                            <span className="text-xs text-yellow-600">Premium</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -478,6 +653,20 @@ const ImpactXP = () => {
                         </div>
                       )}
                     </div>
+
+                    {/* Premium Metrics */}
+                    {activity.premium && (
+                      <div className="grid grid-cols-2 gap-4 mb-4 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-green-600">₹{activity.revenue}</div>
+                          <div className="text-xs text-gray-600">Revenue Generated</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-blue-600">{activity.investorInterest}%</div>
+                          <div className="text-xs text-gray-600">Investor Interest</div>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between text-sm text-gray-500">
                       <div className="flex items-center space-x-4">
@@ -611,8 +800,197 @@ const ImpactXP = () => {
               </div>
             </motion.div>
           )}
+
+          {activeTab === 'premium' && (
+            <motion.div
+              key="premium"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-6"
+            >
+              {/* Premium Features */}
+              <div className="bg-white rounded-xl p-6 border border-emerald-200 shadow-md">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                  <Crown className="w-5 h-5 text-yellow-500 mr-2" />
+                  Premium Plans
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {premiumFeatures.map((plan, index) => (
+                    <motion.div
+                      key={plan.id}
+                      className={`relative p-6 rounded-xl border-2 transition-all duration-300 ${
+                        plan.popular 
+                          ? 'border-yellow-400 bg-gradient-to-br from-yellow-50 to-orange-50' 
+                          : 'border-gray-200 bg-white'
+                      } ${plan.recommended ? 'ring-2 ring-emerald-400' : ''}`}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      {plan.popular && (
+                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                          <span className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+                            Most Popular
+                          </span>
+                        </div>
+                      )}
+                      {plan.recommended && (
+                        <div className="absolute -top-3 right-4">
+                          <span className="bg-emerald-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+                            Recommended
+                          </span>
+                        </div>
+                      )}
+                      
+                      <div className="text-center mb-4">
+                        <h4 className="text-xl font-bold text-gray-800 mb-2">{plan.name}</h4>
+                        <p className="text-gray-600 text-sm mb-4">{plan.description}</p>
+                        <div className="text-3xl font-bold text-gray-800">
+                          ₹{plan.price}
+                          <span className="text-sm text-gray-600 font-normal">/month</span>
+                        </div>
+                      </div>
+                      
+                      <ul className="space-y-2 mb-6">
+                        {plan.features.map((feature, featureIndex) => (
+                          <li key={featureIndex} className="flex items-center text-sm text-gray-700">
+                            <CheckCircle className="w-4 h-4 text-emerald-500 mr-2 flex-shrink-0" />
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                      
+                      <button className="w-full py-3 px-4 rounded-lg font-medium transition-all duration-300 bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600">
+                        Get Started
+                      </button>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'investors' && (
+            <motion.div
+              key="investors"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-6"
+            >
+              {/* Investor Dashboard */}
+              <div className="bg-white rounded-xl p-6 border border-emerald-200 shadow-md">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                  <DollarSign className="w-5 h-5 text-emerald-500 mr-2" />
+                  Investor Dashboard
+                </h3>
+                
+                {/* Premium Lock Warning */}
+                {impactStats.premiumTier === 'free' && (
+                  <div className="mb-6 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold text-yellow-800 flex items-center">
+                          <Lock className="w-4 h-4 mr-2" />
+                          Premium Feature
+                        </h4>
+                        <p className="text-sm text-yellow-700">Upgrade to Pro or Enterprise to access investor metrics and analytics</p>
+                      </div>
+                      <button 
+                        onClick={() => setShowPremiumModal(true)}
+                        className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg text-sm font-medium hover:from-yellow-600 hover:to-orange-600 transition-all"
+                      >
+                        Upgrade
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Investor Metrics Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {investorMetrics.map((metric, index) => (
+                    <motion.div
+                      key={metric.metric}
+                      className={`p-4 rounded-lg border ${
+                        metric.premium && impactStats.premiumTier === 'free'
+                          ? 'border-gray-200 bg-gray-50 opacity-50'
+                          : 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50'
+                      }`}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-gray-700 text-sm">{metric.metric}</h4>
+                        {metric.premium && impactStats.premiumTier === 'free' && (
+                          <Lock className="w-3 h-3 text-gray-400" />
+                        )}
+                      </div>
+                      <div className="text-2xl font-bold text-gray-800 mb-1">
+                        {metric.metric === 'Monthly Revenue' ? `₹${metric.value.toLocaleString()}` : metric.value}
+                      </div>
+                      <div className={`flex items-center text-sm ${
+                        metric.trend === 'up' ? 'text-green-600' : metric.trend === 'down' ? 'text-red-600' : 'text-gray-600'
+                      }`}>
+                        {metric.trend === 'up' ? <ArrowUp className="w-3 h-3 mr-1" /> : 
+                         metric.trend === 'down' ? <ArrowDown className="w-3 h-3 mr-1" /> : null}
+                        <span>{metric.change}%</span>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
+
+      {/* Premium Modal */}
+      {showPremiumModal && (
+        <motion.div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="bg-white rounded-2xl p-6 max-w-md w-full"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+          >
+            <div className="text-center">
+              <Crown className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Upgrade to Premium</h3>
+              <p className="text-gray-600 mb-6">Unlock advanced analytics, investor metrics, and revenue tracking</p>
+              
+              <div className="space-y-3 mb-6">
+                {premiumFeatures.map((plan) => (
+                  <div key={plan.id} className="p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold">{plan.name}</h4>
+                      <span className="text-lg font-bold">₹{plan.price}/month</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-3">{plan.description}</p>
+                    <button className="w-full py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg font-medium hover:from-emerald-600 hover:to-teal-600 transition-all">
+                      Choose {plan.name}
+                    </button>
+                  </div>
+                ))}
+              </div>
+              
+              <button
+                onClick={() => setShowPremiumModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                Maybe later
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 };
