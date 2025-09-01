@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+:root {
+  /* Light Pastel Colors - Hope Inspiring */
+  --light-green: #E8F5E9;
+  --light-blue: #F6FAF9;
+  --light-yellow: #F1F8E9;
+  --pastel-green: #A5D6A7;
+  --pastel-blue: #B1E8D6;
+  --pastel-yellow: #C5E1A5;
+  --mint: #CCF0DF;
+  --sage: #C7E9C0;
+  
+  /* Accent Colors */
+  --accent-green: #66BB6A;
+  --accent-blue: #81C784;
+  --accent-yellow: #9CCC65;
+  --dark-green: #2E7D32;
+  
+  /* Background Colors */
+  --background: #FFFFFF;
+  --foreground: #2E7D32;
+  
+  /* Additional Soft Pastels */
+  --soft-mint: #E0F2F1;
+  --soft-peach: #FCE4EC;
+  --soft-lavender: #F3E5F5;
+  --soft-cream: #FFF8E1;
+  --soft-sky: #E1F5FE;
+}
+
+@theme {
+  /* This block was added to define custom colors for Tailwind CSS v4's theme system */
+  --color-pastel-green: #A5D6A7;
+  --color-pastel-blue: #B1E8D6;
+  --color-pastel-yellow: #C5E1A5;
+  --color-mint: #CCF0DF;
+  --color-sage: #C7E9C0;
+  --color-accent-green: #66BB6A;
+  --color-accent-blue: #81C784;
+  --color-accent-yellow: #9CCC65;
+  --color-dark-green: #2E7D32;
+  --color-background: #FFFFFF;
+  --color-card-bg: #FFFFFF;
+  --color-soft-mint: #E0F2F1;
+  --color-soft-peach: #FCE4EC;
+  --color-soft-lavender: #F3E5F5;
+  --color-soft-cream: #FFF8E1;
+  --color-soft-sky: #E1F5FE;
+}
+
+body {
+  background: linear-gradient(135deg, 
+    var(--light-green) 0%, 
+    var(--soft-mint) 20%, 
+    var(--soft-sky) 40%, 
+    var(--light-blue) 60%, 
+    var(--soft-cream) 80%, 
+    var(--light-yellow) 100%);
+  background-attachment: fixed;
+  color: var(--foreground);
+  font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Fun Font Classes */
+.font-fun {
+  font-family: 'Fredoka', cursive;
+}
+
+.font-clean {
+  font-family: 'Quicksand', sans-serif;
+}
+
+.font-readable {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Beautiful Gradients */
+.gradient-text {
+  background: linear-gradient(135deg, 
+    #66BB6A 0%, 
+    #81C784 20%, 
+    #9CCC65 40%, 
+    #A8DBCA 60%, 
+    #B1E8D6 80%, 
+    #66BB6A 100%);
+  background-size: 200% 200%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-shift 4s ease-in-out infinite;
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Enhanced Card Styles */
+.card {
+  background: rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(165, 214, 167, 0.2);
+  border-radius: 20px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    0 4px 16px rgba(165, 214, 167, 0.1);
+}
+
+/* Soft Pastel Backgrounds */
+.bg-soft-mint {
+  background-color: var(--soft-mint);
+}
+
+.bg-soft-peach {
+  background-color: var(--soft-peach);
+}
+
+.bg-soft-lavender {
+  background-color: var(--soft-lavender);
+}
+
+.bg-soft-cream {
+  background-color: var(--soft-cream);
+}
+
+.bg-soft-sky {
+  background-color: var(--soft-sky);
+}
+
+/* Enhanced Shadows */
+.shadow-pastel {
+  box-shadow: 
+    0 4px 20px rgba(165, 214, 167, 0.15),
+    0 2px 10px rgba(129, 199, 132, 0.1);
+}
+
+.shadow-pastel-lg {
+  box-shadow: 
+    0 8px 32px rgba(165, 214, 167, 0.2),
+    0 4px 16px rgba(129, 199, 132, 0.15);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--light-green);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--pastel-green);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-green);
+}
