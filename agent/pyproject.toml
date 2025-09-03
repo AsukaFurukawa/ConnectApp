@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ngo-connect-ai-agent"
+version = "0.1.0"
+description = "AI Agent for NGO Connect app using LiveKit"
+authors = [{name = "NGO Connect Team"}]
+requires-python = ">=3.8"
+dependencies = [
+    "livekit-agents",
+    "elevenlabs",
+    "groq",
+    "deepgram-sdk",
+    "python-dotenv",
+    "websockets"
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "black", "flake8"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["*"]
+exclude = ["tests*", "docs*"]

@@ -1,0 +1,38 @@
+name: ngo-connect-ai-agent
+identity: ai-assistant
+room: ngo-connect-room
+
+# Agent configuration
+agent:
+  type: python
+  entrypoint: livekit_agent.py
+  env:
+    - GROQ_API_KEY=${GROQ_API_KEY}
+    - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+
+# Room configuration
+room:
+  name: ngo-connect-room
+  auto_join: true
+  permissions:
+    can_publish: true
+    can_subscribe: true
+    can_publish_data: true
+
+# Speech configuration
+speech:
+  stt:
+    provider: whisper
+    model: base
+    language: en
+  tts:
+    provider: elevenlabs
+    voice_id: "21m00Tcm4TlvDq8ikWAM"
+    model: "eleven_multilingual_v2"
+
+# LLM configuration
+llm:
+  provider: groq
+  model: "llama3-8b-8192"
+  temperature: 0.7
+  max_tokens: 200
