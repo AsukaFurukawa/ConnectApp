@@ -26,13 +26,13 @@ const NavigationBar = ({ activeTab, onTabChange }: NavigationBarProps) => {
 
   return (
     <motion.nav 
-      className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-[#A5D6A7]/30 to-[#B1E8D6]/30 backdrop-blur-xl border-t border-[#A5D6A7]/40 shadow-pastel-lg"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-[#A5D6A7]/30 to-[#B1E8D6]/30 backdrop-blur-xl border-t border-[#A5D6A7]/40 shadow-pastel-lg mobile-nav safe-area-bottom"
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
       suppressHydrationWarning
     >
-      <div className="flex justify-around items-center px-3 py-4">
+      <div className="flex justify-around items-center px-3 py-4 safe-area-left safe-area-right">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;

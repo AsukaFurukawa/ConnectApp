@@ -70,6 +70,7 @@ import {
   Unlock as UnlockIcon,
   Sparkle as SparkleIcon
 } from 'lucide-react';
+import UserPosts from './UserPosts';
 
 interface ImpactActivity {
   id: string;
@@ -134,7 +135,7 @@ interface InvestorMetric {
 }
 
 const ImpactXP = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'activities' | 'analytics' | 'goals' | 'premium' | 'investors'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'activities' | 'analytics' | 'goals' | 'premium' | 'investors' | 'posts'>('overview');
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'year' | 'all'>('month');
   const [searchQuery, setSearchQuery] = useState('');
   const [showPremiumModal, setShowPremiumModal] = useState(false);
@@ -467,6 +468,7 @@ const ImpactXP = () => {
         {[
           { id: 'overview', name: 'Overview', icon: '📊' },
           { id: 'activities', name: 'Activities', icon: '📝' },
+          { id: 'posts', name: 'My Posts', icon: '📸' },
           { id: 'analytics', name: 'Analytics', icon: '📈' },
           { id: 'goals', name: 'Goals', icon: '🎯' },
           { id: 'premium', name: 'Premium', icon: '👑' },
@@ -686,6 +688,18 @@ const ImpactXP = () => {
                   </motion.div>
                 ))}
               </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'posts' && (
+            <motion.div
+              key="posts"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-4"
+            >
+              <UserPosts />
             </motion.div>
           )}
 

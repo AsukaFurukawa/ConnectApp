@@ -7,6 +7,7 @@ import AIAssistant from '@/components/AIAssistant';
 import NGOActivities from '@/components/NGOActivities';
 import Rewards from '@/components/Rewards';
 import ImpactXP from '@/components/ImpactXP';
+import CameraComponent from '@/components/CameraComponent';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('ai');
@@ -20,17 +21,7 @@ const Dashboard = () => {
       case 'ngo':
         return <NGOActivities />;
       case 'camera':
-        return (
-          <div className="flex items-center justify-center h-full p-4">
-            <div className="text-center max-w-sm">
-              <div className="w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-[#CCF0DF] to-[#A8DBCA] rounded-full flex items-center justify-center shadow-pastel">
-                <span className="text-2xl">📸</span>
-              </div>
-              <h2 className="text-lg font-bold text-[#2E7D32] mb-2 font-fun">Camera</h2>
-              <p className="text-[#66BB6A] text-sm font-clean">Camera functionality will be implemented here</p>
-            </div>
-          </div>
-        );
+        return <CameraComponent />;
       case 'rewards':
         return <Rewards />;
       default:
@@ -39,9 +30,9 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#E8F5E9] via-[#E0F2F1] via-[#E1F5FE] to-[#FFF8E1] bg-fixed">
+    <div className="min-h-screen bg-gradient-to-br from-[#E8F5E9] via-[#E0F2F1] via-[#E1F5FE] to-[#FFF8E1] bg-fixed safe-area-top">
       {/* Main Content - No Header */}
-      <main className="flex-1 pb-28 md:pb-32 min-h-screen">
+      <main className="flex-1 pb-28 md:pb-32 min-h-screen safe-area-left safe-area-right">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
