@@ -91,6 +91,7 @@ const CameraComponent = () => {
     ngoResponses: number;
     message: string;
   } | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -175,8 +176,8 @@ const CameraComponent = () => {
 
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
+          enableHighAccuracy: false, // Reduced accuracy for better compatibility
+          timeout: 5000, // Shorter timeout
           maximumAge: 300000
         });
       });
@@ -200,8 +201,8 @@ const CameraComponent = () => {
 
       setLocation(locationData);
     } catch (error) {
-      console.error('Error getting location:', error);
-      // Fallback location
+      console.log('Location access denied or unavailable, using default location');
+      // Fallback location - don't show error to user
       setLocation({
         latitude: 12.9716,
         longitude: 77.5946,
@@ -218,6 +219,11 @@ const CameraComponent = () => {
   // Start camera
   const startCamera = async () => {
     try {
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera not supported on this device');
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           facingMode: 'environment', // Use back camera on mobile
@@ -228,12 +234,34 @@ const CameraComponent = () => {
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        // Wait for video to load
+        videoRef.current.onloadedmetadata = () => {
+          if (videoRef.current) {
+            videoRef.current.play().catch(console.error);
+          }
+        };
         streamRef.current = stream;
       }
       setShowCamera(true);
     } catch (error) {
       console.error('Error accessing camera:', error);
-      alert('Unable to access camera. Please check permissions.');
+      
+      // More specific error messages
+      let errorMessage = 'Unable to access camera. ';
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          errorMessage += 'Please allow camera permissions and try again.';
+        } else if (error.name === 'NotFoundError') {
+          errorMessage += 'No camera found on this device.';
+        } else if (error.name === 'NotSupportedError') {
+          errorMessage += 'Camera not supported on this device.';
+        } else {
+          errorMessage += 'Please check your camera settings.';
+        }
+      }
+      
+      setCameraError(errorMessage);
+      // Don't show alert, just set error state
     }
   };
 
@@ -303,6 +331,17 @@ const CameraComponent = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+    }
+  };
+
+  // Handle file upload
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
+      setCapturedMedia({ type: mediaType, url, file });
+      setCurrentStep('category');
     }
   };
 
@@ -699,6 +738,23 @@ const CameraComponent = () => {
           </div>
         </div>
 
+        {/* Camera Error Message */}
+        {cameraError && (
+          <div className="w-full max-w-sm mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+            <div className="flex items-center gap-2 text-yellow-700">
+              <AlertCircle className="w-5 h-5" />
+              <span className="text-sm font-medium">Camera Issue</span>
+            </div>
+            <p className="text-sm text-yellow-600 mt-1">{cameraError}</p>
+            <button
+              onClick={() => setCameraError(null)}
+              className="text-xs text-yellow-600 hover:text-yellow-800 mt-2"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="w-full max-w-sm space-y-4">
           {!capturedMedia ? (
@@ -711,10 +767,18 @@ const CameraComponent = () => {
                 Open Camera
               </button>
               
-              <button className="w-full py-4 bg-white border-2 border-[#4CAF50] text-[#4CAF50] rounded-xl font-semibold text-lg hover:bg-[#4CAF50] hover:text-white transition-all duration-300 flex items-center justify-center gap-3">
-                <Upload className="w-6 h-6" />
-                Upload from Gallery
-              </button>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={handleFileUpload}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <button className="w-full py-4 bg-white border-2 border-[#4CAF50] text-[#4CAF50] rounded-xl font-semibold text-lg hover:bg-[#4CAF50] hover:text-white transition-all duration-300 flex items-center justify-center gap-3">
+                  <Upload className="w-6 h-6" />
+                  Upload from Gallery
+                </button>
+              </div>
             </>
           ) : (
             <button

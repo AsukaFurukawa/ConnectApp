@@ -1,0 +1,325 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // User Profile Data
+  xp            Int       @default(0)
+  level         Int       @default(1)
+  streak        Int       @default(0)
+  lastActive    DateTime  @default(now())
+  referralCode  String    @unique @default(cuid())
+  referralCount Int       @default(0)
+  totalSpent    Float     @default(0)
+  vipStatus     Boolean   @default(false)
+  nextVipMilestone Int    @default(1000)
+
+  // Location Data
+  location      Json?     // { lat: number, lng: number, city: string, state: string }
+  
+  // Impact Metrics
+  totalImpact   Json      @default("{\"treesPlanted\": 0, \"co2Saved\": 0, \"plasticRecycled\": 0, \"waterSaved\": 0}")
+  
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  posts         Post[]
+  userBadges    UserBadge[]
+  userRewards   UserReward[]
+  leaderboard   LeaderboardEntry?
+  notifications Notification[]
+  challenges    UserChallenge[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Post {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  category    String
+  location    Json     // { lat: number, lng: number, city: string, state: string }
+  images      String[] @default([])
+  videos      String[] @default([])
+  status      String   @default("pending") // pending, in_progress, completed, cancelled
+  xpEarned    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments    Comment[]
+  ngoResponses NGOResponse[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model NGOResponse {
+  id          String   @id @default(cuid())
+  ngoName     String
+  ngoLogo     String?
+  message     String
+  images      String[] @default([])
+  videos      String[] @default([])
+  status      String   @default("pending") // pending, accepted, rejected
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  postId      String
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Badge {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  icon        String
+  emoji       String
+  rarity      String   // common, rare, epic, legendary
+  category    String   // sustainability, social, achievement, special
+  xpReward    Int      @default(0)
+  color       String
+  gradient    String
+  maxProgress Int      @default(100)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userBadges  UserBadge[]
+}
+
+model UserBadge {
+  id          String   @id @default(cuid())
+  progress    Int      @default(0)
+  unlockedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId     String
+  badge       Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+}
+
+model Reward {
+  id                String   @id @default(cuid())
+  name              String
+  description       String
+  brand             String
+  xpCost            Int
+  availability      String   @default("in-stock") // in-stock, limited, out-of-stock
+  images            String[] @default([])
+  category          String
+  sustainabilityScore Int    @default(0)
+  realBrandId       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  userRewards       UserReward[]
+}
+
+model UserReward {
+  id              String   @id @default(cuid())
+  xpSpent         Int
+  status          String   @default("pending") // pending, processing, completed, cancelled
+  trackingId      String?
+  redeemedAt      DateTime @default(now())
+  deliveryAddress Json?    // { name, address, city, state, pincode, phone }
+
+  // Relations
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rewardId        String
+  reward          Reward   @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+}
+
+model LeaderboardEntry {
+  id          String   @id @default(cuid())
+  rank        Int
+  tier        String   // bronze, silver, gold, platinum, diamond
+  achievements String[] @default([])
+  lastActive  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  type      String   // achievement, reward, ngo_response, system
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Challenge {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  xpReward    Int
+  maxProgress Int      @default(100)
+  expiresAt   DateTime
+  icon        String
+  category    String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userChallenges UserChallenge[]
+}
+
+model UserChallenge {
+  id          String   @id @default(cuid())
+  progress    Int      @default(0)
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeId String
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
+}
+
+model NGOActivity {
+  id          String   @id @default(cuid())
+  ngoName     String
+  ngoLogo     String?
+  title       String
+  description String
+  category    String
+  location    String
+  coordinates Json     // { lat: number, lng: number }
+  date        DateTime
+  images      String[] @default([])
+  videos      String[] @default([])
+  likes       Int      @default(0)
+  comments    Int      @default(0)
+  shares      Int      @default(0)
+  impact      String
+  verified    Boolean  @default(false)
+  source      String
+  externalUrl String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model VolunteerRequest {
+  id              String   @id @default(cuid())
+  ngoName         String
+  ngoLogo         String?
+  title           String
+  description     String
+  category        String
+  location        String
+  coordinates     Json     // { lat: number, lng: number }
+  startDate       DateTime
+  endDate         DateTime?
+  skillsRequired  String[] @default([])
+  timeCommitment  String
+  images          String[] @default([])
+  videos          String[] @default([])
+  applicationUrl  String?
+  externalUrl     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Fundraiser {
+  id              String   @id @default(cuid())
+  ngoName         String
+  ngoLogo         String?
+  title           String
+  description     String
+  category        String
+  location        String
+  coordinates     Json     // { lat: number, lng: number }
+  targetAmount    Float
+  currentAmount   Float    @default(0)
+  endDate         DateTime
+  images          String[] @default([])
+  videos          String[] @default([])
+  donationUrl     String?
+  externalUrl     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

@@ -23,14 +23,79 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { ngoDataService, RealNGOActivity, RealVolunteerRequest, RealFundraiser } from '@/services/ngoDataService';
+import { ngoScraperService, ScrapedNGOActivity, ScrapedVolunteerRequest, ScrapedFundraiser } from '@/services/ngoScraperService';
+import NGOScraperDemo from './NGOScraperDemo';
+import NGODetailModal from './NGODetailModal';
 
-// Using real data types from service
-type NGOActivity = RealNGOActivity;
-type VolunteerRequest = RealVolunteerRequest;
-type Fundraiser = RealFundraiser;
+// Using API data types
+interface APIActivity {
+  id: string;
+  ngoName: string;
+  ngoLogo: string;
+  title: string;
+  description: string;
+  category: string;
+  location: string;
+  coordinates: { lat: number; lng: number };
+  date: string;
+  images: string[];
+  videos: string[];
+  likes: number;
+  comments: number;
+  shares: number;
+  impact: string;
+  verified: boolean;
+  source: string;
+  externalUrl?: string;
+}
+
+interface APIVolunteer {
+  id: string;
+  ngoName: string;
+  ngoLogo: string;
+  title: string;
+  description: string;
+  category: string;
+  location: string;
+  coordinates: { lat: number; lng: number };
+  date: string;
+  volunteersNeeded: number;
+  volunteersApplied: number;
+  duration: string;
+  skills: string[];
+  images: string[];
+  urgent: boolean;
+  verified: boolean;
+  source: string;
+  applicationUrl?: string;
+}
+
+interface APIFundraiser {
+  id: string;
+  ngoName: string;
+  ngoLogo: string;
+  title: string;
+  description: string;
+  category: string;
+  location: string;
+  coordinates: { lat: number; lng: number };
+  targetAmount: number;
+  raisedAmount: number;
+  endDate: string;
+  images: string[];
+  videos: string[];
+  donors: number;
+  verified: boolean;
+  source: string;
+  donationUrl?: string;
+}
+
+type NGOActivity = APIActivity;
+type VolunteerRequest = APIVolunteer;
+type Fundraiser = APIFundraiser;
 
 const NGOActivities = () => {
-  const [activeTab, setActiveTab] = useState<'activities' | 'volunteers' | 'fundraisers'>('activities');
+  const [activeTab, setActiveTab] = useState<'activities' | 'volunteers' | 'fundraisers' | 'scraper'>('activities');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
@@ -38,6 +103,11 @@ const NGOActivities = () => {
   const [userLocation, setUserLocation] = useState<{ city: string; state: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  
+  // Modal state
+  const [selectedItem, setSelectedItem] = useState<NGOActivity | VolunteerRequest | Fundraiser | null>(null);
+  const [modalType, setModalType] = useState<'activity' | 'volunteer' | 'fundraiser'>('activity');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Categories
   const categories = [
@@ -62,18 +132,50 @@ const NGOActivities = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [activitiesData, volunteersData, fundraisersData] = await Promise.all([
-        ngoDataService.getRealActivities(locationFilter, selectedCategory === 'all' ? undefined : selectedCategory),
-        ngoDataService.getRealVolunteerRequests(locationFilter, selectedCategory === 'all' ? undefined : selectedCategory),
-        ngoDataService.getRealFundraisers(locationFilter, selectedCategory === 'all' ? undefined : selectedCategory)
-      ]);
-
-      setActivities(activitiesData);
-      setVolunteerRequests(volunteersData);
-      setFundraisers(fundraisersData);
-      setLastUpdated(new Date());
+      console.log('Fetching data with filters:', { locationFilter, selectedCategory });
+      
+      // Use the API route for real NGO data
+      const params = new URLSearchParams();
+      if (locationFilter) params.append('location', locationFilter);
+      if (selectedCategory !== 'all') params.append('category', selectedCategory);
+      params.append('type', 'all');
+      
+      const response = await fetch(`/api/ngo-data?${params.toString()}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('Fetched data from API:', result.data);
+        setActivities(result.data.activities || []);
+        setVolunteerRequests(result.data.volunteers || []);
+        setFundraisers(result.data.fundraisers || []);
+        setLastUpdated(new Date());
+      } else {
+        console.error('API Error:', result.error);
+        // Fallback to original service if API fails
+        const [activitiesData, volunteersData, fundraisersData] = await Promise.all([
+          ngoDataService.getRealActivities(locationFilter, selectedCategory === 'all' ? undefined : selectedCategory),
+          ngoDataService.getRealVolunteerRequests(locationFilter, selectedCategory === 'all' ? undefined : selectedCategory),
+          ngoDataService.getRealFundraisers(locationFilter, selectedCategory === 'all' ? undefined : selectedCategory)
+        ]);
+        setActivities(activitiesData);
+        setVolunteerRequests(volunteersData);
+        setFundraisers(fundraisersData);
+      }
     } catch (error) {
       console.error('Error fetching NGO data:', error);
+      // Fallback to original service
+      try {
+        const [activitiesData, volunteersData, fundraisersData] = await Promise.all([
+          ngoDataService.getRealActivities(locationFilter, selectedCategory === 'all' ? undefined : selectedCategory),
+          ngoDataService.getRealVolunteerRequests(locationFilter, selectedCategory === 'all' ? undefined : selectedCategory),
+          ngoDataService.getRealFundraisers(locationFilter, selectedCategory === 'all' ? undefined : selectedCategory)
+        ]);
+        setActivities(activitiesData);
+        setVolunteerRequests(volunteersData);
+        setFundraisers(fundraisersData);
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -85,6 +187,7 @@ const NGOActivities = () => {
       const location = await ngoDataService.getUserLocation();
       if (location) {
         setUserLocation({ city: location.city, state: location.state });
+        // Set location filter to match API data format
         setLocationFilter(`${location.city}, ${location.state}`);
       }
     };
@@ -96,6 +199,18 @@ const NGOActivities = () => {
   useEffect(() => {
     fetchData();
   }, [selectedCategory, locationFilter]);
+
+  // Modal handlers
+  const handleItemClick = (item: NGOActivity | VolunteerRequest | Fundraiser, type: 'activity' | 'volunteer' | 'fundraiser') => {
+    setSelectedItem(item);
+    setModalType(type);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedItem(null);
+  };
 
   // Filter functions
   const filteredActivities = activities.filter(activity => {
@@ -145,14 +260,19 @@ const NGOActivities = () => {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-2xl font-bold text-[#2E7D32] font-fun">NGO Activities</h1>
-          <button
-            onClick={fetchData}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-3 py-2 bg-[#4CAF50] text-white rounded-lg hover:bg-[#2E7D32] transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            <span className="text-sm font-medium">Refresh</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[#4CAF50] font-medium bg-green-100 px-2 py-1 rounded-full">
+              🌐 Live Scraped Data
+            </span>
+            <button
+              onClick={fetchData}
+              disabled={isLoading}
+              className="flex items-center gap-2 px-3 py-2 bg-[#4CAF50] text-white rounded-lg hover:bg-[#2E7D32] transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="text-sm font-medium">Scrape Data</span>
+            </button>
+          </div>
         </div>
         <div className="flex items-center justify-between">
           <p className="text-[#66BB6A] text-sm font-clean">Discover amazing work by NGOs and find ways to help</p>
@@ -231,7 +351,8 @@ const NGOActivities = () => {
         {[
           { id: 'activities', name: 'Activities', icon: '📋', count: filteredActivities.length },
           { id: 'volunteers', name: 'Volunteer Requests', icon: '🤝', count: filteredVolunteers.length },
-          { id: 'fundraisers', name: 'Fundraisers', icon: '💰', count: filteredFundraisers.length }
+          { id: 'fundraisers', name: 'Fundraisers', icon: '💰', count: filteredFundraisers.length },
+          { id: 'scraper', name: 'Scraper Demo', icon: '🕷️', count: 0 }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -268,7 +389,8 @@ const NGOActivities = () => {
                   key={activity.id}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"
+                  className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all duration-300"
+                  onClick={() => handleItemClick(activity, 'activity')}
                 >
                   {/* Header */}
                   <div className="flex items-center gap-3 mb-3">
@@ -379,9 +501,10 @@ const NGOActivities = () => {
                   key={volunteer.id}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className={`bg-white rounded-xl p-4 shadow-sm border ${
+                  className={`bg-white rounded-xl p-4 shadow-sm border cursor-pointer hover:shadow-md transition-all duration-300 ${
                     volunteer.urgent ? 'border-red-200 bg-red-50' : 'border-gray-100'
                   }`}
+                  onClick={() => handleItemClick(volunteer, 'volunteer')}
                 >
                   {/* Header */}
                   <div className="flex items-center gap-3 mb-3">
@@ -506,7 +629,8 @@ const NGOActivities = () => {
                   key={fundraiser.id}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white rounded-xl p-4 shadow-sm border border-gray-100"
+                  className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all duration-300"
+                  onClick={() => handleItemClick(fundraiser, 'fundraiser')}
                 >
                   {/* Header */}
                   <div className="flex items-center gap-3 mb-3">
@@ -616,6 +740,10 @@ const NGOActivities = () => {
               ))}
             </div>
           )}
+
+          {activeTab === 'scraper' && (
+            <NGOScraperDemo />
+          )}
         </motion.div>
       </AnimatePresence>
 
@@ -631,6 +759,14 @@ const NGOActivities = () => {
           <p className="text-gray-500">Try adjusting your search or filters</p>
         </div>
       )}
+
+      {/* Detail Modal */}
+      <NGODetailModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        item={selectedItem}
+        type={modalType}
+      />
     </div>
   );
 };

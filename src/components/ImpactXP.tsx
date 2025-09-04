@@ -135,7 +135,15 @@ interface InvestorMetric {
 }
 
 const ImpactXP = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'activities' | 'analytics' | 'goals' | 'premium' | 'investors' | 'posts'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'activities' | 'analytics' | 'goals' | 'premium' | 'investors' | 'posts' | 'impact-stories' | 'community'>('overview');
+  const [liveImpact, setLiveImpact] = useState({
+    totalLivesImpacted: 0,
+    totalChildrenHelped: 0,
+    totalFamiliesSupported: 0,
+    realTimeUpdates: []
+  });
+  const [impactStories, setImpactStories] = useState([]);
+  const [communityActivity, setCommunityActivity] = useState([]);
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'year' | 'all'>('month');
   const [searchQuery, setSearchQuery] = useState('');
   const [showPremiumModal, setShowPremiumModal] = useState(false);
@@ -162,6 +170,92 @@ const ImpactXP = () => {
     brandValue: 15000,
     sustainabilityIndex: 92
   };
+
+  // Real-time impact updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLiveImpact(prev => ({
+        ...prev,
+        totalLivesImpacted: prev.totalLivesImpacted + Math.floor(Math.random() * 3),
+        totalChildrenHelped: prev.totalChildrenHelped + Math.floor(Math.random() * 2),
+        totalFamiliesSupported: prev.totalFamiliesSupported + Math.floor(Math.random() * 2),
+        realTimeUpdates: [
+          ...prev.realTimeUpdates.slice(-4),
+          {
+            id: Date.now(),
+            type: 'impact',
+            message: `New impact created: ${Math.floor(Math.random() * 5) + 1} lives helped`,
+            timestamp: new Date(),
+            location: ['Mumbai', 'Delhi', 'Bangalore', 'Chennai'][Math.floor(Math.random() * 4)]
+          }
+        ]
+      }));
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Mock impact stories data
+  useEffect(() => {
+    const mockStories = [
+      {
+        id: 1,
+        title: "Priya's Journey from Street to School",
+        content: "Thanks to your post about street children in Mumbai, Priya, 8, now attends school regularly and dreams of becoming a teacher.",
+        image: "https://picsum.photos/400/300?random=story1",
+        impact: { livesImpacted: 1, childrenHelped: 1, familiesSupported: 1 },
+        location: "Dharavi, Mumbai",
+        timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        verified: true,
+        likes: 234,
+        shares: 45
+      },
+      {
+        id: 2,
+        title: "Clean Water Changes Everything",
+        content: "Your water crisis post led to a purification system being installed in Beed district, helping 25 families access clean water.",
+        image: "https://picsum.photos/400/300?random=story2",
+        impact: { livesImpacted: 25, childrenHelped: 15, familiesSupported: 5 },
+        location: "Beed District, Maharashtra",
+        timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        verified: true,
+        likes: 189,
+        shares: 67
+      }
+    ];
+    setImpactStories(mockStories);
+  }, []);
+
+  // Mock community activity
+  useEffect(() => {
+    const mockActivity = [
+      {
+        id: 1,
+        user: "EcoWarrior_2024",
+        action: "helped 3 street children",
+        location: "Mumbai",
+        timestamp: new Date(Date.now() - 10 * 60 * 1000),
+        xp: 150
+      },
+      {
+        id: 2,
+        user: "WaterHero",
+        action: "provided clean water to 5 families",
+        location: "Rajasthan",
+        timestamp: new Date(Date.now() - 25 * 60 * 1000),
+        xp: 200
+      },
+      {
+        id: 3,
+        user: "EducationChampion",
+        action: "supported 2 rural schools",
+        location: "Karnataka",
+        timestamp: new Date(Date.now() - 45 * 60 * 1000),
+        xp: 180
+      }
+    ];
+    setCommunityActivity(mockActivity);
+  }, []);
 
   // Premium Features
   const premiumFeatures: PremiumFeature[] = [
@@ -469,6 +563,8 @@ const ImpactXP = () => {
           { id: 'overview', name: 'Overview', icon: '📊' },
           { id: 'activities', name: 'Activities', icon: '📝' },
           { id: 'posts', name: 'My Posts', icon: '📸' },
+          { id: 'impact-stories', name: 'Impact Stories', icon: '📖' },
+          { id: 'community', name: 'Community', icon: '👥' },
           { id: 'analytics', name: 'Analytics', icon: '📈' },
           { id: 'goals', name: 'Goals', icon: '🎯' },
           { id: 'premium', name: 'Premium', icon: '👑' },
@@ -504,6 +600,62 @@ const ImpactXP = () => {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-6"
             >
+              {/* Hero Section */}
+              <div className="bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 rounded-xl p-8 text-white text-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+                <div className="relative z-10">
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-6xl mb-4"
+                  >
+                    🌟
+                  </motion.div>
+                  <h1 className="text-3xl font-bold mb-2">You're Making a Real Difference!</h1>
+                  <p className="text-lg text-green-100 mb-4">
+                    Every post you create has the power to change lives. Keep up the amazing work!
+                  </p>
+                  <div className="flex justify-center gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">{impactStats.totalXP}</div>
+                      <div className="text-sm text-green-100">Total XP</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">Level {impactStats.level}</div>
+                      <div className="text-sm text-green-100">Impact Champion</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">{impactStats.totalPeopleHelped}</div>
+                      <div className="text-sm text-green-100">Lives Helped</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Live Impact Feed */}
+              <div className="bg-white rounded-xl p-6 shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-green-500" />
+                  Live Impact Feed
+                </h3>
+                <div className="space-y-3">
+                  {liveImpact.realTimeUpdates.slice(-3).map((update) => (
+                    <motion.div
+                      key={update.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200"
+                    >
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-green-800">{update.message}</p>
+                        <p className="text-xs text-green-600">{update.location} • {update.timestamp.toLocaleTimeString()}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
               {/* Recent Achievements */}
               <div className="bg-white rounded-xl p-6 border border-emerald-200 shadow-md">
                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
@@ -700,6 +852,262 @@ const ImpactXP = () => {
               className="space-y-4"
             >
               <UserPosts />
+            </motion.div>
+          )}
+
+          {/* Impact Stories Tab */}
+          {activeTab === 'impact-stories' && (
+            <motion.div
+              key="impact-stories"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-6"
+            >
+              {/* Header */}
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">📖 Your Impact Stories</h2>
+                <p className="text-gray-600">Real stories of change you've created through your posts</p>
+              </div>
+
+              {/* Live Impact Counter */}
+              <div className="bg-gradient-to-r from-green-500 to-blue-500 rounded-xl p-6 text-white">
+                <div className="text-center mb-4">
+                  <h3 className="text-xl font-bold mb-2">🌟 Live Impact Counter</h3>
+                  <p className="text-green-100">Your posts are creating real change right now!</p>
+                </div>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-3xl font-bold">{liveImpact.totalLivesImpacted}</div>
+                    <div className="text-sm text-green-100">Lives Impacted</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold">{liveImpact.totalChildrenHelped}</div>
+                    <div className="text-sm text-green-100">Children Helped</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold">{liveImpact.totalFamiliesSupported}</div>
+                    <div className="text-sm text-green-100">Families Supported</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Real-time Updates */}
+              <div className="bg-white rounded-xl p-6 shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-green-500" />
+                  Real-time Impact Updates
+                </h3>
+                <div className="space-y-3">
+                  {liveImpact.realTimeUpdates.map((update) => (
+                    <motion.div
+                      key={update.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200"
+                    >
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-green-800">{update.message}</p>
+                        <p className="text-xs text-green-600">{update.location} • {update.timestamp.toLocaleTimeString()}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Impact Stories */}
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Heart className="w-5 h-5 text-red-500" />
+                  Your Success Stories
+                </h3>
+                {impactStories.map((story) => (
+                  <motion.div
+                    key={story.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+                  >
+                    <div className="md:flex">
+                      <div className="md:w-1/3">
+                        <img
+                          src={story.image}
+                          alt={story.title}
+                          className="w-full h-48 md:h-full object-cover"
+                        />
+                      </div>
+                      <div className="md:w-2/3 p-6">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="text-xl font-bold text-gray-800 mb-2">{story.title}</h4>
+                            <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                              <MapPin className="w-4 h-4" />
+                              <span>{story.location}</span>
+                              {story.verified && <CheckCircle className="w-4 h-4 text-green-500" />}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm text-gray-500">
+                              {story.timestamp.toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+
+                        <p className="text-gray-700 mb-4 leading-relaxed">{story.content}</p>
+
+                        {/* Impact Metrics */}
+                        <div className="bg-green-50 rounded-lg p-4 mb-4">
+                          <h5 className="font-semibold text-green-800 mb-2">🌟 Impact Created</h5>
+                          <div className="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                              <div className="text-lg font-bold text-green-600">{story.impact.livesImpacted}</div>
+                              <div className="text-xs text-green-700">Lives Impacted</div>
+                            </div>
+                            <div>
+                              <div className="text-lg font-bold text-green-600">{story.impact.childrenHelped}</div>
+                              <div className="text-xs text-green-700">Children Helped</div>
+                            </div>
+                            <div>
+                              <div className="text-lg font-bold text-green-600">{story.impact.familiesSupported}</div>
+                              <div className="text-xs text-green-700">Families Supported</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Story Engagement */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                            <div className="flex items-center gap-1">
+                              <Heart className="w-4 h-4" />
+                              <span>{story.likes}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Share2 className="w-4 h-4" />
+                              <span>{story.shares}</span>
+                            </div>
+                          </div>
+                          <button className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-colors">
+                            Share Story
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Call to Action */}
+              <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl p-6 text-white text-center">
+                <h3 className="text-xl font-bold mb-2">Keep Creating Impact!</h3>
+                <p className="text-blue-100 mb-4">
+                  Every post you create has the power to change lives. Continue making a difference in your community.
+                </p>
+                <button
+                  onClick={() => setActiveTab('posts')}
+                  className="bg-white text-blue-600 px-6 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+                >
+                  Create New Post
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Community Tab */}
+          {activeTab === 'community' && (
+            <motion.div
+              key="community"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-6"
+            >
+              {/* Header */}
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">👥 Community Impact</h2>
+                <p className="text-gray-600">See how our community is making a difference together</p>
+              </div>
+
+              {/* Community Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-white rounded-xl p-4 shadow-sm text-center">
+                  <div className="text-2xl font-bold text-green-600">1,247</div>
+                  <div className="text-sm text-gray-600">Active Users</div>
+                </div>
+                <div className="bg-white rounded-xl p-4 shadow-sm text-center">
+                  <div className="text-2xl font-bold text-blue-600">5,432</div>
+                  <div className="text-sm text-gray-600">Posts Created</div>
+                </div>
+                <div className="bg-white rounded-xl p-4 shadow-sm text-center">
+                  <div className="text-2xl font-bold text-purple-600">12,567</div>
+                  <div className="text-sm text-gray-600">Lives Impacted</div>
+                </div>
+                <div className="bg-white rounded-xl p-4 shadow-sm text-center">
+                  <div className="text-2xl font-bold text-orange-600">89</div>
+                  <div className="text-sm text-gray-600">NGOs Supported</div>
+                </div>
+              </div>
+
+              {/* Live Community Activity */}
+              <div className="bg-white rounded-xl p-6 shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-blue-500" />
+                  Live Community Activity
+                </h3>
+                <div className="space-y-3">
+                  {communityActivity.map((activity) => (
+                    <motion.div
+                      key={activity.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200"
+                    >
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                        {activity.user.charAt(0)}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-blue-800">
+                          <span className="font-bold">{activity.user}</span> {activity.action}
+                        </p>
+                        <p className="text-xs text-blue-600">{activity.location} • {activity.timestamp.toLocaleTimeString()}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-bold text-green-600">+{activity.xp} XP</div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Community Leaderboard */}
+              <div className="bg-white rounded-xl p-6 shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-yellow-500" />
+                  Top Impact Makers
+                </h3>
+                <div className="space-y-3">
+                  {[
+                    { rank: 1, user: "EcoWarrior_2024", xp: 2847, impact: "156 lives helped" },
+                    { rank: 2, user: "WaterHero", xp: 2654, impact: "89 families supported" },
+                    { rank: 3, user: "EducationChampion", xp: 2432, impact: "67 children educated" }
+                  ].map((user) => (
+                    <div key={user.rank} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${
+                        user.rank === 1 ? 'bg-yellow-500' : user.rank === 2 ? 'bg-gray-400' : 'bg-orange-500'
+                      }`}>
+                        {user.rank}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-800">{user.user}</p>
+                        <p className="text-sm text-gray-600">{user.impact}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-bold text-green-600">{user.xp} XP</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </motion.div>
           )}
 

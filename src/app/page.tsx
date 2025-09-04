@@ -8,9 +8,15 @@ import NGOActivities from '@/components/NGOActivities';
 import Rewards from '@/components/Rewards';
 import ImpactXP from '@/components/ImpactXP';
 import CameraComponent from '@/components/CameraComponent';
+import NGOForum from '@/components/NGOForum';
+import SustainableRewards from '@/components/SustainableRewards';
+import ImpactShowcase from '@/components/ImpactShowcase';
+import HeroSection from '@/components/HeroSection';
+import CauseShowcase from '@/components/CauseShowcase';
+import LandingPage from '@/components/LandingPage';
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState('ai');
+  const [activeTab, setActiveTab] = useState('landing');
 
   const renderActiveTab = () => {
     switch (activeTab) {
@@ -20,10 +26,20 @@ const Dashboard = () => {
         return <ImpactXP />;
       case 'ngo':
         return <NGOActivities />;
+      case 'forum':
+        return <NGOForum />;
       case 'camera':
         return <CameraComponent />;
       case 'rewards':
-        return <Rewards />;
+        return <SustainableRewards />;
+      case 'showcase':
+        return <ImpactShowcase />;
+      case 'hero':
+        return <HeroSection />;
+      case 'causes':
+        return <CauseShowcase />;
+      case 'landing':
+        return <LandingPage />;
       default:
         return <AIAssistant />;
     }
